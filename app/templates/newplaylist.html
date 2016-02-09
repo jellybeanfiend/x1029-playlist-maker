@@ -1,0 +1,67 @@
+<!doctype html>
+<html>
+<head>
+	<title>X1029 Playlist Maker</title>
+	<style type="text/css">
+		body,html{
+			width:100%;
+		}
+		h1{
+			text-align: center;
+		}
+		.step{
+			display:flex;
+			max-width:300px;
+			align-items: center;
+			justify-content: center;
+			flex-direction: column;
+			margin-top: 60px;
+			margin: 0 auto;
+		}
+
+		.option{
+			display:flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			margin: 10px;
+			width: 30%;
+			min-height: 200px;
+		}
+
+		input{
+			font-size: 21px;
+		}
+		button{
+			color: #fff;
+			font-size: 21px;
+			background-color: #2ebd59;
+			border: 0;
+			padding: 11px 13px;
+			display:block;
+		}
+		form{
+			width: 100%;
+		}
+	</style>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+</head>
+<body>
+	<h1>X1029 Playlist Maker</h1>
+
+	<div class="container">
+		<div class="step">
+			<h2>Step 2: Create the playlist</h2>
+			Welcome, {{user.display_name}}!
+			<form action="/create-playlist/" method="post">
+				<div class="form-group">
+					<label class="sr-only" for="playlistName">Name your playlist</label>
+					<input type="text" class="form-control" name="playlistName" id="playlistName" placeholder="Name your playlist">
+				</div>
+				<button type="submit" class="btn btn-primary btn-lg btn-block">Make it!</button>
+			</form>
+		</div>
+	</div>
+
+</body>
+</html>
