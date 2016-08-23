@@ -5,9 +5,24 @@ import requests
 import base64
 from datetime import datetime
 
-SPOTIFY_ACCOUNTS_SERVICE_BASE_URL = 'https://accounts.spotify.com/'
-SPOTIFY_API_BASE_URL = 'https://api.spotify.com/'
-SPOTIFY_CREATE_PLAYLIST = SPOTIFY_API_BASE_URL + '/v1/users/{}/playlists'
+SPOTIFY_BASE_URLS = {
+    'api': 'https://api.spotify.com',
+    'accounts': 'https://accounts.spotify.com'
+}
+
+SPOTIFY_ENDPOINTS = {
+    'authorize': ('accounts', '/authorize'),
+    'token': ('accounts', '/api/token'),
+    'create_playlist': ('api', '/v1/users/{}/playlists'),
+    'profile': ('api', '/v1/me'),
+    'add_tracks_to_playlist': ('api', '/users/{}/playlists/{}/tracks'),
+}
+
+
+def get_spotify_url(endpoint, *args):
+    base, endpoint_url = SPOTIFY_ENDPOINTS[endpoint]
+    url = SPOTIFY_BASE_URLS[base] + endpoint_url
+    return url.format(args)
 
 
 @app.route("/")
@@ -35,7 +50,7 @@ def request_authorization():
             'response_type': 'code',
             'scope': "playlist-modify-public"
     }
-    r = requests.get(SPOTIFY_AUTHORIZE_URL, params=payload)
+    r = requests.get(get_spotify_url('authorize'), params=payload)
     return redirect(r.url)
 
 
@@ -58,7 +73,7 @@ def request_access_token(params):
                                           app.config['CLIENT_SECRET'])
     base64encoded = base64.b64encode(authorization_header)
     headers = {'Authorization': "Basic " + base64encoded}
-    r = requests.post("https://accounts.spotify.com/api/token",
+    r = requests.post(get_spotify_url('token'),
                       data=params,
                       headers=headers)
     response_data = r.json()
@@ -89,8 +104,7 @@ def refresh_access_token():
 
 def get_spotify_user_data():
     headers = {'Authorization': "Bearer {}".format(session['access_token'])}
-    url = 'https://api.spotify.com/v1/me'
-    r = requests.get(url, headers=headers)
+    r = requests.get(get_spotify_url('profile'), headers=headers)
     return r.json()
 
 
@@ -139,7 +153,7 @@ def create_spotify_playlist(playlist_name):
     headers = {'Authorization': "Bearer {}".format(session['access_token']),
                'Content-Type': 'application/json'}
     data = {'name': playlist_name}
-    r = requests.post(SPOTIFY_CREATE_PLAYLIST.format(spotify_user_id),
+    r = requests.post(get_spotify_url('create_playlist', spotify_user_id),
                       json=data,
                       headers=headers)
     response = r.json()
@@ -159,7 +173,9 @@ def get_songs_from_db(user):
 
 def add_songs_to_playlist(tracks, user):
     for i in xrange(0, len(tracks), 100):
-            url = "https://api.spotify.com/v1/users/{}/playlists/{}/tracks".format(user.user_id, user.playlist_id)
+            url = get_spotify_url('add_tracks_to_playlist',
+                                  user.user_id,
+                                  user.playlist_id)
             headers = {'Authorization': "Bearer {}".format(session['access_token']), 'Content-Type': 'application/json'}
             data = {
                     'uris': tracks[i:i+100]
