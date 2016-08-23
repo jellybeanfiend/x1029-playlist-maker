@@ -6,7 +6,7 @@ from app.models import Song
 
 
 SPOTIFY_SEARCH_URL = 'https://api.spotify.com/v1/search'
-LAST_SONG_PLAYED_URL = 'http://lsp.x1029.com/api/v1/station/history/'
+LAST_SONGS_PLAYED_URL = 'http://lsp.x1029.com/api/v1/station/history/'
 LSP_PARAMS = {
     'domain': '',
     'format': 'json',
@@ -14,8 +14,8 @@ LSP_PARAMS = {
 }
 
 
-def get_songs_last_played():
-    url = requests.get(LAST_SONG_PLAYED_URL, params=LSP_PARAMS).url
+def get_last_songs_played():
+    url = requests.get(LAST_SONGS_PLAYED_URL, params=LSP_PARAMS).url
     while True:
         time.sleep(15)
         request_object = requests.get(url)
@@ -27,7 +27,6 @@ def get_songs_last_played():
             artist, song = track
             add_song_to_db(artist, song)
         db.session.commit()
-        break
         if parsed_response['next_url']:
             url = parsed_response['next_url']
         else:
@@ -88,4 +87,4 @@ def get_song_uri(artist, song):
     except LookupError:
         return None
 
-get_songs_last_played()
+get_last_songs_played()

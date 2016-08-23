@@ -14,6 +14,7 @@
 			display:flex;
 			align-items: center;
 			justify-content: center;
+            width: 300px;
 			flex-direction: column;
 			margin-top: 90px;
 			margin: 0 auto;
@@ -56,39 +57,16 @@
 	<h1>X1029 Playlist Maker</h1>
 	{% if not signed_in %}
 	<div class="container">
-			<h2>Step 1: Authorize</h2>
 		<div class="step">
-			<form action="request-authorization/" method="get">
-				<button type="submit" class="btn btn-primary btn-lg">Login to Spotify</button>
-			</form>
-		</div>
-	</div>
-	{% endif %}
-
-	{% if signed_in and not user.last_updated %}
-	<div class="container">
-			<h2>Step 2: Create the playlist</h2>
-		<div class="step">
-			Welcome, {{user.display_name}}!
-			<form action="/create-playlist/" method="post">
+			<form action="authorize/request/" method="get">
 				<div class="form-group">
-					<label class="sr-only" for="playlistName">Name your playlist</label>
-					<input type="text" class="form-control" name="playlistName" id="playlistName" placeholder="Name your playlist">
+					<label for="playlistName">Name your playlist</label>
+					<input type="text" class="form-control" name="playlistName"
+                    id="playlistName" placeholder="X1029">
 				</div>
-				<button type="submit" class="btn btn-primary btn-lg">Make it!</button>
-			</form>
-		</div>
-	</div>
-	{% endif %}
 
-	{% if signed_in and user.last_updated %}
-	<div class="container">
-			<h2>Step 2: Update playlist</h2>
-		<div class="step">
-			<p>Welcome, {{user.display_name}}!</p>
-			<p>Want to update your playlist, {{user.playlist_name}}?</p>
-			<form action="/update-playlist/" method="post">
-				<button type="submit" class="btn btn-primary btn-lg">Update my playlist!</button>
+				<button type="submit" class="btn btn-primary btn-lg">Make
+                    Playlist</button>
 			</form>
 		</div>
 	</div>

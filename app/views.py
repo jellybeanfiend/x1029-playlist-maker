@@ -5,9 +5,14 @@ import requests
 import base64
 from datetime import datetime
 
+SPOTIFY_ACCOUNTS_SERVICE_BASE_URL = 'https://accounts.spotify.com/'
+SPOTIFY_API_BASE_URL = 'https://api.spotify.com/'
+SPOTIFY_CREATE_PLAYLIST = SPOTIFY_API_BASE_URL + '/v1/users/{}/playlists'
+
 
 @app.route("/")
 def index():
+    session.clear()
     signed_in = 'user_id' in session
     user = None
     if signed_in:
@@ -22,46 +27,64 @@ def songs():
 
 
 # Step 1 - Request authorization from Spotify
-@app.route("/request-authorization/")
+@app.route("/authorize/request/")
 def request_authorization():
     payload = {
             'client_id': app.config['CLIENT_ID'],
             'redirect_uri': app.config['REDIRECT_URI'],
-            'response_type': "code",
+            'response_type': 'code',
             'scope': "playlist-modify-public"
     }
-    r = requests.get("https://accounts.spotify.com/authorize", params=payload)
+    r = requests.get(SPOTIFY_AUTHORIZE_URL, params=payload)
     return redirect(r.url)
 
 
-# Step 2-4 - Spotify redirects here after the user authorizes access
-@app.route("/authorization-response/")
+# Step 2 - Spotify redirects here after the user authorizes access
+@app.route("/authorize/response/")
 def authorization_response():
     error = request.args.get('error')
     if error:
-            print "DAMNIT! Error! {}".format(error)
+            print "Error! {}".format(error)
             return error
     code = request.args.get('code')
-    response_data = get_access_token(code)
-    session['refresh_token'] = response_data['refresh_token']
-    session['access_token'] = response_data['access_token']
+    set_access_and_refresh_tokens(code)
     # Get user id and check if it's in the db
     user = add_user()
     return render_template('index.html', signed_in=True, user=user)
 
 
-def get_access_token(code):
-    base64encoded = base64.b64encode("{}:{}".format(app.config['CLIENT_ID'], app.config['CLIENT_SECRET']))
+def request_access_token(params):
+    authorization_header = "{}:{}".format(app.config['CLIENT_ID'],
+                                          app.config['CLIENT_SECRET'])
+    base64encoded = base64.b64encode(authorization_header)
     headers = {'Authorization': "Basic " + base64encoded}
-    payload = {
-            'grant_type': "authorization_code",
-            'code': code,
-            'redirect_uri': app.config['REDIRECT_URI']
-    }
-    r = requests.post("https://accounts.spotify.com/api/token", data=payload, headers=headers)
+    r = requests.post("https://accounts.spotify.com/api/token",
+                      data=params,
+                      headers=headers)
     response_data = r.json()
-    print response_data
     return response_data
+
+
+# Step 3 - Exchange code for access and refresh tokens
+def set_access_and_refresh_tokens(code):
+    payload = {
+        'grant_type': "authorization_code",
+        'code': code,
+        'redirect_uri': app.config['REDIRECT_URI']
+    }
+    response_data = request_access_token(payload)
+    session['refresh_token'] = response_data['refresh_token']
+    session['access_token'] = response_data['access_token']
+
+
+# Step 4 - When the access token expires, request a new one with refresh token
+def refresh_access_token():
+    payload = {
+            'grant_type': "refresh_token",
+            'refresh_token': session['refresh_token']
+    }
+    response_data = request_access_token(payload)
+    session['access_token'] = response_data['access_token']
 
 
 def get_spotify_user_data():
@@ -111,23 +134,14 @@ def get_user_from_db():
     return user
 
 
-def refresh_access_token():
-    base64encoded = base64.b64encode("{}:{}".format(app.config['CLIENT_ID'], app.config['CLIENT_SECRET']))
-    headers = {'Authorization': "Basic " + base64encoded}
-    payload = {
-            'grant_type': "refresh_token",
-            'refresh_token': refresh_token
-    }
-    r = requests.post("https://accounts.spotify.com/api/token", data=payload, headers=headers)
-    response_data = r.json()
-    session['access_token'] = response_data['access_token']
-
-
-def create_spotify_playlist(name):
-    user_id = session['user_id']
-    headers = {'Authorization': "Bearer {}".format(session['access_token']), 'Content-Type': 'application/json'}
-    data = {'name': name}
-    r = requests.post('https://api.spotify.com/v1/users/' + user_id + '/playlists', json=data, headers=headers)
+def create_spotify_playlist(playlist_name):
+    spotify_user_id = session['user_id']
+    headers = {'Authorization': "Bearer {}".format(session['access_token']),
+               'Content-Type': 'application/json'}
+    data = {'name': playlist_name}
+    r = requests.post(SPOTIFY_CREATE_PLAYLIST.format(spotify_user_id),
+                      json=data,
+                      headers=headers)
     response = r.json()
     return response['id']
 
