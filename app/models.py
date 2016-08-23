@@ -1,33 +1,32 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text
-from sqlalchemy.ext.declarative import declarative_base
+from app import db
 
-Base = declarative_base()
+class User(db.Model):
+    __tablename__ = 'users'
 
-class User(Base):
-	__tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.String(255), unique=True)
+    display_name = db.Column(db.String(255))
+    last_updated = db.Column(db.DateTime)
+    playlist_id = db.Column(db.String(255))
+    playlist_name = db.Column(db.String(255))
 
-	id = Column(Integer, primary_key=True)
-	user_id = Column(String(255), unique=True)
-	display_name = Column(String(255))
-	last_updated = Column(DateTime)
-	playlist_id = Column(String(255))
-	playlist_name = Column(String(255))
+    def __init__(self, user_id, display_name):
+        self.user_id = user_id
+        self.display_name = display_name
 
-	def __init__(self, user_id, display_name):
-		self.user_id = user_id
-		self.display_name = display_name
 
-class Song(Base):
-	__tablename__ = 'songs'
+class Song(db.Model):
+    __tablename__ = 'songs'
 
-	id = Column(Integer, primary_key=True)
-	date_added = Column(DateTime)
-	name = Column(String(255))
-	artist = Column(String(255))
-	spotify_uri = Column(Text)
+    id = db.Column(db.Integer, primary_key=True)
+    date_added = db.Column(db.DateTime, default=db.func.now())
+    name = db.Column(db.String(255))
+    artist = db.Column(db.String(255))
+    spotify_uri = db.Column(db.Text)
+    is_valid = db.Column(db.Boolean)
 
-	def __init__(self, date_added, name, artist, spotify_uri):
-		self.date_added = date_added
-		self.name = name
-		self.artist = artist
-		self.spotify_uri = spotify_uri
+    def __init__(self, name, artist, spotify_uri, is_valid):
+        self.name = name
+        self.artist = artist
+        self.spotify_uri = spotify_uri
+        self.is_valid = is_valid

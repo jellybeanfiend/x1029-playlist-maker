@@ -5,7 +5,7 @@
 	<body>
 		<ul>
 			{% for song in songs%}
-				<li>{{song.0}} - {{song.1}}</li>
+                        <li>{{song.name}} - {{song.artist}} - {{song.spotify_uri}}</li>
 			{% endfor %}
 		</ul>
 	</body>
