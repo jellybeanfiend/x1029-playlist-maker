@@ -5,10 +5,7 @@ import requests
 import base64
 from datetime import datetime
 
-SPOTIFY_BASE_URLS = {
-    'api': 'https://api.spotify.com',
-    'accounts': 'https://accounts.spotify.com'
-}
+SPOTIFY_BASE_URL = 'https://{}.spotify.com'
 
 SPOTIFY_ENDPOINTS = {
     'authorize': ('accounts', '/authorize'),
@@ -19,15 +16,22 @@ SPOTIFY_ENDPOINTS = {
 }
 
 
+class SpotifyAPIError(Exception):
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return "{} - {}".format(self.value['status'], self.value['message'])
+
+
 def get_spotify_url(endpoint, *args):
-    base, endpoint_url = SPOTIFY_ENDPOINTS[endpoint]
-    url = SPOTIFY_BASE_URLS[base] + endpoint_url
+    subdomain, endpoint_url = SPOTIFY_ENDPOINTS[endpoint]
+    url = SPOTIFY_BASE_URL.format(subdomain) + endpoint_url
     return url.format(args)
 
 
 @app.route("/")
 def index():
-    session.clear()
     signed_in = 'user_id' in session
     user = None
     if signed_in:
@@ -108,23 +112,23 @@ def get_spotify_user_data():
     return r.json()
 
 
-@app.route("/create-playlist/", methods=['GET', 'POST'])
-def create_playlist():
+@app.route("/create-playlist/<playlist_name>")
+def create_playlist(playlist_name):
     user = get_user_from_db()
-    if request.method == 'POST':
-            playlist_name = request.form['playlistName']
-            # Create spotify playlist
-            playlist_id = create_spotify_playlist(playlist_name)
-            print playlist_name
-            print playlist_id
-            # Update db with playlist name and id
-            user.playlist_name = playlist_name
-            user.playlist_id = playlist_id
-            # add all songs to playlist
-            songs = get_songs_from_db(user)
-            add_songs_to_playlist(songs, user)
-            user.last_updated = datetime.now()
-            db.session.commit()
+    # Create spotify playlist
+    return "HI"
+    try:
+        playlist_id = create_spotify_playlist(playlist_name)
+    except SpotifyAPIError as e:
+        return e.message
+    # Update db with playlist name and id
+    user.playlist_name = playlist_name
+    user.playlist_id = playlist_id
+    # add all songs to playlist
+    songs = get_songs_from_db(user)
+    add_songs_to_playlist(songs, user)
+    user.last_updated = datetime.now()
+    db.session.commit()
     return render_template('newplaylist.html', user=user)
 
 
@@ -157,6 +161,8 @@ def create_spotify_playlist(playlist_name):
                       json=data,
                       headers=headers)
     response = r.json()
+    if 'error' in response:
+        raise SpotifyAPIError(response['error'])
     return response['id']
 
 
@@ -184,3 +190,14 @@ def add_songs_to_playlist(tracks, user):
             print r.status_code
             print r.content
     return "done"
+
+
+@app.route('/test-error/')
+def test_error():
+    r = requests.get('https://api.spotify.com/v1/tracks/2KrxsD86ARO5beq7Q0Drfqa')
+    response = r.json()
+    if 'error' in response:
+        raise SpotifyAPIError(response['error'])
+
+
+

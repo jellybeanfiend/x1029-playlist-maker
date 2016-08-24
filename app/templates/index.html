@@ -55,8 +55,8 @@
 </head>
 <body>
 	<h1>X1029 Playlist Maker</h1>
-	{% if not signed_in %}
 	<div class="container">
+        {% if not signed_in %}
 		<div class="step">
 			<form action="authorize/request/" method="get">
 				<div class="form-group">
@@ -69,7 +69,10 @@
                     Playlist</button>
 			</form>
 		</div>
+        {% else %}
+        <div>Hi, {{user.display_name}}</div>
+        {% endif %}
 	</div>
-	{% endif %}
+
 </body>
 </html>
