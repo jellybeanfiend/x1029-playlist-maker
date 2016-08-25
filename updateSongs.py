@@ -1,3 +1,4 @@
+import sys
 import sqlalchemy
 import time
 import requests
@@ -14,9 +15,9 @@ LSP_PARAMS = {
 }
 
 
-def get_last_songs_played():
+def get_last_songs_played(num_pages=50):
     url = requests.get(LAST_SONGS_PLAYED_URL, params=LSP_PARAMS).url
-    while True:
+    for _ in xrange(num_pages):
         time.sleep(15)
         request_object = requests.get(url)
         if request_object.status_code != 200:
@@ -87,4 +88,9 @@ def get_song_uri(artist, song):
     except LookupError:
         return None
 
-get_last_songs_played()
+if __name__ == "__main__":
+    # expect first argument to be the number of pages of X1029 history to go
+    # through
+    if len(sys.argv) > 1:
+        num_pages = int(sys.argv[1])
+        get_last_songs_played(num_pages)
