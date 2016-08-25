@@ -18,7 +18,8 @@ class Playlist(db.Model):
     playlist_id = db.Column(db.String(255))
     playlist_name = db.Column(db.String(255))
 
-    def __init__(self, playlist_id, playlist_name):
+    def __init__(self, user_id, playlist_id, playlist_name):
+        self.user_id = user_id
         self.playlist_id = playlist_id
         self.playlist_name = playlist_name
 

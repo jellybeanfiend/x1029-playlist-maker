@@ -1,9 +1,10 @@
 from flask import render_template, request, redirect, session
 from app import app
-from models import db, User, Song
+from models import db, User, Song, Playlist
 import requests
 import base64
 from datetime import datetime
+import sqlalchemy
 
 SPOTIFY_BASE_URL = 'https://{}.spotify.com'
 
@@ -27,7 +28,7 @@ class SpotifyAPIError(Exception):
 def get_spotify_url(endpoint, *args):
     subdomain, endpoint_url = SPOTIFY_ENDPOINTS[endpoint]
     url = SPOTIFY_BASE_URL.format(subdomain) + endpoint_url
-    return url.format(args)
+    return url.format(*args)
 
 
 @app.route("/")
@@ -41,7 +42,7 @@ def index():
 
 @app.route("/songs/")
 def songs():
-    songs = db.session.query(Song).all()
+    songs = db.session.query(Song).filter(Song.is_valid).all()
     return render_template("songlist.html", songs=songs)
 
 
@@ -106,6 +107,15 @@ def refresh_access_token():
     session['access_token'] = response_data['access_token']
 
 
+@app.route('/aboutme/')
+def about_me():
+    data = get_spotify_user_data()
+    print data['id']
+    print session
+    print session['spotify_user_id']
+    return 'yay'
+
+
 def get_spotify_user_data():
     headers = {'Authorization': "Bearer {}".format(session['access_token'])}
     r = requests.get(get_spotify_url('profile'), headers=headers)
@@ -116,44 +126,49 @@ def get_spotify_user_data():
 def create_playlist(playlist_name):
     user = get_user_from_db()
     # Create spotify playlist
-    return "HI"
     try:
         playlist_id = create_spotify_playlist(playlist_name)
     except SpotifyAPIError as e:
+        print e
+        # TODO: Handle error gracefully
         return e.message
     # Update db with playlist name and id
-    user.playlist_name = playlist_name
-    user.playlist_id = playlist_id
+    playlist_data = {
+        'playlist_id': playlist_id,
+        'playlist_name': playlist_name,
+        'user_id': user.id
+    }
+    playlist = Playlist(playlist_data)
+    db.session.add(playlist)
     # add all songs to playlist
-    songs = get_songs_from_db(user)
+    songs = get_songs_from_db()
     add_songs_to_playlist(songs, user)
-    user.last_updated = datetime.now()
+    playlist.last_updated = datetime.now()
     db.session.commit()
     return render_template('newplaylist.html', user=user)
 
 
 def add_user():
     user_data = get_spotify_user_data()
-    print user_data
-    user_id = user_data['id']
-    session['user_id'] = user_id
+    spotify_user_id = user_data['id']
     display_name = user_data['display_name']
+    session['spotify_user_id'] = spotify_user_id
     user = get_user_from_db()
     if user is None:
-            user = User(user_id, display_name)
+            user = User(spotify_user_id, display_name)
             db.session.add(user)
             db.session.commit()
     return user
 
 
 def get_user_from_db():
-    user_id = session['user_id']
-    user = db.session.query(User).filter_by(user_id=user_id).first()
+    spotify_user_id = session['spotify_user_id']
+    user = db.session.query(User).filter_by(spotify_user_id=spotify_user_id).first()
     return user
 
 
 def create_spotify_playlist(playlist_name):
-    spotify_user_id = session['user_id']
+    spotify_user_id = session['spotify_user_id']
     headers = {'Authorization': "Bearer {}".format(session['access_token']),
                'Content-Type': 'application/json'}
     data = {'name': playlist_name}
@@ -166,30 +181,30 @@ def create_spotify_playlist(playlist_name):
     return response['id']
 
 
-def get_songs_from_db(user):
-    if user.last_updated is None:
+def get_songs_from_db(last_updated=None):
+    if last_updated is None:
             # get all songs
-            songs = db.session.query(Song).all()
+            songs = db.session.query(Song).filter(Song.is_valid).all()
     else:
             # get songs that were added after last playlist update
-            songs = db.session.query(Song).filter(Song.date_added > user.last_updated)
-    valid_spotify_uris = map(lambda x: x.spotify_uri, filter(lambda x: x.spotify_uri != '0', songs))
-    return valid_spotify_uris
+            songs = db.session.query(Song).filter(sqlalchemy._and(
+                                                  Song.is_valid,
+                                                  Song.date_added > last_updated
+                                                  )).all()
+    return songs
 
 
-def add_songs_to_playlist(tracks, user):
+def add_songs_to_playlist(tracks, user, playlist):
+    # Max of 100 tracks can be added per request
     for i in xrange(0, len(tracks), 100):
             url = get_spotify_url('add_tracks_to_playlist',
-                                  user.user_id,
-                                  user.playlist_id)
+                                  user.spotify_user_id,
+                                  playlist.playlist_id)
             headers = {'Authorization': "Bearer {}".format(session['access_token']), 'Content-Type': 'application/json'}
             data = {
                     'uris': tracks[i:i+100]
             }
-            r = requests.post(url, json=data, headers=headers)
-            print r.status_code
-            print r.content
-    return "done"
+            requests.post(url, json=data, headers=headers)
 
 
 @app.route('/test-error/')
