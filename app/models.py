@@ -1,23 +1,29 @@
 from app import db
 
 class User(db.Model):
-    __tablename__ = 'users'
-
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.String(255), unique=True)
+    spotify_id = db.Column(db.String(255), unique=True)
     display_name = db.Column(db.String(255))
+    playlists = db.relationship('Playlist', backref='user', lazy='dynamic')
+
+    def __init__(self, spotify_id, display_name):
+        self.spotify_id = spotify_id
+        self.display_name = display_name
+
+
+class Playlist(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     last_updated = db.Column(db.DateTime)
     playlist_id = db.Column(db.String(255))
     playlist_name = db.Column(db.String(255))
 
-    def __init__(self, user_id, display_name):
-        self.user_id = user_id
-        self.display_name = display_name
+    def __init__(self, playlist_id, playlist_name):
+        self.playlist_id = playlist_id
+        self.playlist_name = playlist_name
 
 
 class Song(db.Model):
-    __tablename__ = 'songs'
-
     id = db.Column(db.Integer, primary_key=True)
     date_added = db.Column(db.DateTime, default=db.func.now())
     name = db.Column(db.String(255))
