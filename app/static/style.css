@@ -1,0 +1,112 @@
+body{
+    background-color: #f8f8f8;
+    color: rgb(46, 47, 51);
+    font-family: 'Roboto', sans-serif;
+    font-weight: 300;
+}
+
+.container{
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.options{
+    display:flex;
+    justify-content: center;
+    flex-direction: row;
+}
+
+h1{
+    text-align:center;
+}
+
+h2{
+    font-weight: 300;
+}
+
+.option{
+    display:flex;
+    flex-direction: column;
+    background-color: #fff;
+    font-family: roboto;
+    padding: 10px;
+    position:relative;
+    margin: 10px;
+    width:20%;
+}
+
+.option::before{
+  content: '';
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+}
+
+.create:before{
+    border-top: 7px solid rgb(30,215,96)
+}
+
+.update:before{
+    border-top: 7px solid #ff6437;
+}
+
+.create h2{
+    color: #2ebd59;
+}
+
+.update h2{
+    color: #ff6437;
+}
+
+.option button{
+  background-color: #fff;
+  padding: 10px 20px;
+  font-size: 17px;
+  font-weight: 300;
+  border-radius: 22px;
+  font-family: roboto;
+  text-align: center;
+  display:block;
+  margin: 0 auto;
+  align-self: flex-end;
+  margin-top: auto;
+}
+
+.create input{
+  padding: 3px;
+  width: 80%;
+  border-top: 0;
+  width: 98%;
+  margin: 0 auto;
+  font-size: 18px;
+  font-family: Roboto;
+  font-weight: 300;
+  padding-left: 0;
+  margin-left:0;
+  color: rgb(30, 215, 96);
+  display: block;
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 1px solid rgb(208, 215, 210);
+}
+
+.create input:focus{
+    outline: none;
+}
+
+.create button{
+    border: 2px solid #1ED760;
+    color: rgb(30, 215, 96);
+}
+
+.update button{
+    border: 2px solid #ff6437;
+    color: #ff6437;
+}
+
+.update p{
+    margin-top: 0px;
+}

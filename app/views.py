@@ -44,71 +44,6 @@ def songs():
     songs = get_songs_from_db()
     return render_template("songlist.html", songs=songs)
 
-
-# Step 1 - Request authorization from Spotify
-@app.route("/authorize/request/", methods=["POST"])
-def request_authorization():
-    playlist_name = request.form['playlistName']
-    session['playlist_name'] = playlist_name
-    payload = {
-            'client_id': app.config['CLIENT_ID'],
-            'redirect_uri': app.config['REDIRECT_URI'],
-            'response_type': 'code',
-            'scope': "playlist-modify-public"
-    }
-    r = requests.get(get_spotify_url('authorize'), params=payload)
-    return redirect(r.url)
-
-
-# Step 2 - Spotify redirects here after the user authorizes access
-@app.route("/authorize/response/")
-def authorization_response():
-    error = request.args.get('error')
-    if error:
-            print "Error! {}".format(error)
-            return error
-    code = request.args.get('code')
-    set_access_and_refresh_tokens(code)
-    # Get user id and check if it's in the db
-    add_user()
-    playlist_name = session['playlist_name']
-    return redirect(url_for('create_playlist', playlist_name=playlist_name))
-
-
-def request_access_token(params):
-    authorization_header = "{}:{}".format(app.config['CLIENT_ID'],
-                                          app.config['CLIENT_SECRET'])
-    base64encoded = base64.b64encode(authorization_header)
-    headers = {'Authorization': "Basic " + base64encoded}
-    r = requests.post(get_spotify_url('token'),
-                      data=params,
-                      headers=headers)
-    response_data = r.json()
-    return response_data
-
-
-# Step 3 - Exchange code for access and refresh tokens
-def set_access_and_refresh_tokens(code):
-    payload = {
-        'grant_type': "authorization_code",
-        'code': code,
-        'redirect_uri': app.config['REDIRECT_URI']
-    }
-    response_data = request_access_token(payload)
-    session['refresh_token'] = response_data['refresh_token']
-    session['access_token'] = response_data['access_token']
-
-
-# Step 4 - When the access token expires, request a new one with refresh token
-def refresh_access_token():
-    payload = {
-            'grant_type': "refresh_token",
-            'refresh_token': session['refresh_token']
-    }
-    response_data = request_access_token(payload)
-    session['access_token'] = response_data['access_token']
-
-
 @app.route('/aboutme/')
 def about_me():
     data = get_spotify_user_data()
@@ -116,12 +51,6 @@ def about_me():
     print session
     print session['spotify_user_id']
     return 'yay'
-
-
-def get_spotify_user_data():
-    headers = {'Authorization': "Bearer {}".format(session['access_token'])}
-    r = requests.get(get_spotify_url('profile'), headers=headers)
-    return r.json()
 
 
 @app.route("/playlist/create/<playlist_name>")
@@ -148,6 +77,84 @@ def create_playlist(playlist_name):
     playlist.last_updated = datetime.now()
     db.session.commit()
     return render_template('playlist.html', playlist_name=playlist_name)
+
+
+#
+# Authorization Flow
+#
+
+
+@app.route("/authorize/request/", methods=["POST"])
+def request_authorization():
+    """ Step 1 - Request authorization from Spotify """
+
+    playlist_name = request.form['playlistName']
+    session['playlist_name'] = playlist_name
+    payload = {
+            'client_id': app.config['CLIENT_ID'],
+            'redirect_uri': app.config['REDIRECT_URI'],
+            'response_type': 'code',
+            'scope': "playlist-modify-public"
+    }
+    r = requests.get(get_spotify_url('authorize'), params=payload)
+    return redirect(r.url)
+
+
+@app.route("/authorize/response/")
+def authorization_response():
+    """ Step 2 - Spotify redirects here after the user authorizes access."""
+    error = request.args.get('error')
+    if error:
+            print "Error! {}".format(error)
+            return error
+    code = request.args.get('code')
+    set_access_and_refresh_tokens(code)
+    # Get user id and check if it's in the db
+    add_user()
+    playlist_name = session['playlist_name']
+    return redirect(url_for('create_playlist', playlist_name=playlist_name))
+
+
+
+def set_access_and_refresh_tokens(code):
+    """ Step 3 - Exchange code for access and refresh tokens """
+    payload = {
+        'grant_type': "authorization_code",
+        'code': code,
+        'redirect_uri': app.config['REDIRECT_URI']
+    }
+    response_data = request_access_token(payload)
+    session['refresh_token'] = response_data['refresh_token']
+    session['access_token'] = response_data['access_token']
+
+
+def refresh_access_token():
+    """ Step 4 - When the access token expires, request a new one with refresh
+    token """
+    payload = {
+            'grant_type': "refresh_token",
+            'refresh_token': session['refresh_token']
+    }
+    response_data = request_access_token(payload)
+    session['access_token'] = response_data['access_token']
+
+
+def request_access_token(params):
+    authorization_header = "{}:{}".format(app.config['CLIENT_ID'],
+                                          app.config['CLIENT_SECRET'])
+    base64encoded = base64.b64encode(authorization_header)
+    headers = {'Authorization': "Basic " + base64encoded}
+    r = requests.post(get_spotify_url('token'),
+                      data=params,
+                      headers=headers)
+    response_data = r.json()
+    return response_data
+
+
+def get_spotify_user_data():
+    headers = {'Authorization': "Bearer {}".format(session['access_token'])}
+    r = requests.get(get_spotify_url('profile'), headers=headers)
+    return r.json()
 
 
 def add_user():
