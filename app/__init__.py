@@ -5,5 +5,5 @@ app = Flask(__name__)
 app.config.from_object('config')
 db = SQLAlchemy(app)
 
-from models import User, Song
+from models import User, Song, Playlist
 from app import views

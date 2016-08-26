@@ -73,6 +73,7 @@ def parse_X1029_response(response):
     return result
 
 
+# TODO: Handle weird not official versions of songs like karaoke/covers
 def get_song_uri(artist, song):
     params = {
         'q': 'artist:{} track:{}'.format(artist, song),

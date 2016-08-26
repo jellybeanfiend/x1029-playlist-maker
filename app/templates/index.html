@@ -56,9 +56,8 @@
 <body>
 	<h1>X1029 Playlist Maker</h1>
 	<div class="container">
-        {% if not signed_in %}
 		<div class="step">
-			<form action="authorize/request/" method="get">
+			<form action="authorize/request/" method="POST">
 				<div class="form-group">
 					<label for="playlistName">Name your playlist</label>
 					<input type="text" class="form-control" name="playlistName"
@@ -69,9 +68,6 @@
                     Playlist</button>
 			</form>
 		</div>
-        {% else %}
-        <div>Hi, {{user.display_name}}</div>
-        {% endif %}
 	</div>
 
 </body>
