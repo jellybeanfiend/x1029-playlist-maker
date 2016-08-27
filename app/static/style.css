@@ -9,12 +9,15 @@ body{
     display: flex;
     justify-content: center;
     flex-direction: column;
+    max-width: 600px;
+    margin: 0 auto;
 }
 
 .options{
     display:flex;
     justify-content: center;
     flex-direction: row;
+    flex-wrap: wrap;
 }
 
 h1{
@@ -28,15 +31,18 @@ h2{
 .option{
     display:flex;
     flex-direction: column;
+    margin: 10px;
+    width: 45%;
+}
+
+.box{
     background-color: #fff;
     font-family: roboto;
     padding: 10px;
     position:relative;
-    margin: 10px;
-    width:20%;
 }
 
-.option::before{
+.box::before{
   content: '';
   display: block;
   position: absolute;
@@ -45,12 +51,28 @@ h2{
   width: 100%;
 }
 
+.option:first-child{
+    margin-left: 0;
+}
+
+.option:last-child{
+    margin-right: 0;
+}
+
 .create:before{
-    border-top: 7px solid rgb(30,215,96)
+    border-top: 7px solid rgb(30,215,96);
 }
 
 .update:before{
     border-top: 7px solid #ff6437;
+}
+
+.about:before{
+    border-top: 7px solid rgb(152, 237, 234);
+}
+
+.about h2{
+    color: rgb(152, 237, 234);
 }
 
 .create h2{
@@ -59,6 +81,10 @@ h2{
 
 .update h2{
     color: #ff6437;
+}
+
+.about{
+    margin-top:10px;
 }
 
 .option button{
@@ -73,6 +99,7 @@ h2{
   margin: 0 auto;
   align-self: flex-end;
   margin-top: auto;
+  margin-bottom: 10px;
 }
 
 .create input{
@@ -86,11 +113,17 @@ h2{
   font-weight: 300;
   padding-left: 0;
   margin-left:0;
+  margin-bottom:20px;
   color: rgb(30, 215, 96);
   display: block;
   border-left: 0;
   border-right: 0;
   border-bottom: 1px solid rgb(208, 215, 210);
+}
+
+.option form{
+    margin-top: auto;
+    /* align-self: flex-end; */
 }
 
 .create input:focus{
@@ -102,9 +135,21 @@ h2{
     color: rgb(30, 215, 96);
 }
 
+.create button:hover{
+    background-color: #1ED760;
+    color: white;
+    cursor: pointer;
+}
+
 .update button{
     border: 2px solid #ff6437;
     color: #ff6437;
+}
+
+.update button:hover{
+    background-color: #ff6437;
+    color: #fff;
+    cursor: pointer;
 }
 
 .update p{

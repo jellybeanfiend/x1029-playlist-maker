@@ -15,13 +15,13 @@ class Playlist(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     last_updated = db.Column(db.DateTime)
-    playlist_id = db.Column(db.String(255))
-    playlist_name = db.Column(db.String(255))
+    spotify_id = db.Column(db.String(255))
+    name = db.Column(db.String(255))
 
-    def __init__(self, user_id, playlist_id, playlist_name):
+    def __init__(self, user_id, spotify_id, name):
         self.user_id = user_id
-        self.playlist_id = playlist_id
-        self.playlist_name = playlist_name
+        self.spotify_id = spotify_id
+        self.name = name
 
 
 class Song(db.Model):

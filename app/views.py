@@ -65,8 +65,8 @@ def create_playlist(playlist_name):
         return e.message
     # Update db with playlist name and id
     playlist_data = {
-        'playlist_id': playlist_id,
-        'playlist_name': playlist_name,
+        'spotify_id': playlist_id,
+        'name': playlist_name,
         'user_id': user.id
     }
     playlist = Playlist(**playlist_data)
@@ -88,8 +88,17 @@ def create_playlist(playlist_name):
 def request_authorization():
     """ Step 1 - Request authorization from Spotify """
 
-    playlist_name = request.form['playlistName']
-    session['playlist_name'] = playlist_name
+    if 'action' not in request.form:
+        return redirect(url_for('index'))
+
+    if request.form['action'] == 'create':
+        playlist_name = request.form['playlistName'] or "X1029 Playlist"
+        session['playlist_name'] = playlist_name
+        session['action'] = 'create'
+
+    if request.form['action'] == 'update':
+        session['action'] = 'update'
+
     payload = {
             'client_id': app.config['CLIENT_ID'],
             'redirect_uri': app.config['REDIRECT_URI'],
@@ -112,7 +121,11 @@ def authorization_response():
     # Get user id and check if it's in the db
     add_user()
     playlist_name = session['playlist_name']
-    return redirect(url_for('create_playlist', playlist_name=playlist_name))
+    if session['action'] == 'create':
+        return redirect(url_for('create_playlist', playlist_name=playlist_name))
+    if session['action'] == 'update':
+        return redirect(url_for('list_playlists'))
+    return redirect(url_for('index'))
 
 
 
@@ -208,7 +221,7 @@ def add_songs_to_playlist(tracks, user, playlist):
     for i in xrange(0, len(tracks), 100):
         url = get_spotify_url('add_tracks_to_playlist',
                               user.spotify_id,
-                              playlist.playlist_id)
+                              playlist.spotify_id)
         authorization_header = "Bearer {}".format(session['access_token'])
         headers = {'Authorization': authorization_header,
                    'Content-Type': 'application/json'}
@@ -229,7 +242,7 @@ def add_tracks():
     print playlist.playlist_name
     url = get_spotify_url('add_tracks_to_playlist',
                              spotify_id,
-                             playlist.playlist_id)
+                             playlist.spotify_id)
     authorization_header = "Bearer {}".format(session['access_token'])
     headers = {'Authorization': authorization_header,
                'Content-Type': 'application/json'}
