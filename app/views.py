@@ -1,4 +1,4 @@
-from flask import render_template, request, redirect, session, url_for
+from flask import render_template, request, redirect, session, url_for, flash
 from app import app
 from models import db, User, Song, Playlist
 import requests
@@ -76,7 +76,8 @@ def create_playlist(playlist_name):
     add_songs_to_playlist(songs, user, playlist)
     playlist.last_updated = datetime.now()
     db.session.commit()
-    return render_template('playlist.html', playlist_name=playlist_name)
+    flash('Your playlist, ' + playlist_name + ', was successfully created!', 'success')
+    return render_template('index.html')
 
 
 #
@@ -257,6 +258,9 @@ def add_tracks():
     return "YAY"
 
 
+def num_songs_added_since_last_updated(last_updated):
+    return Song.query.filter(Song.date_added > last_updated).count()
+
 @app.route('/test-error/')
 def test_error():
     r = requests.get('https://api.spotify.com/v1/tracks/2KrxsD86ARO5beq7Q0Drfqa')
@@ -265,4 +269,11 @@ def test_error():
         raise SpotifyAPIError(response['error'])
 
 
-
+@app.route('/playlists/')
+def list_playlists():
+    user = get_user_from_db()
+    playlists = user.playlists
+    num_songs_to_add = {}
+    for playlist in playlists:
+        num_songs_to_add[playlist.name] = num_songs_added_since_last_updated(playlist.last_updated)
+    return render_template('playlists.html', playlists=playlists, num_songs_to_add=num_songs_to_add)

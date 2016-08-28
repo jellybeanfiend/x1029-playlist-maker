@@ -1,0 +1,11 @@
+{% extends "layout.html" %}
+{% block body %}
+    <div class="box playlists">
+        <h2>Your Playlists</h2>
+        <ul>
+            {% for playlist in playlists %}
+                <li>{{ playlist.name }} - {{num_songs_to_add[playlist.name]}}</li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endblock %}

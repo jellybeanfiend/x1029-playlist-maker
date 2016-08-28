@@ -71,6 +71,14 @@ h2{
     border-top: 7px solid rgb(152, 237, 234);
 }
 
+.playlists:before{
+    border-top: 7px solid rgb(196, 104, 228);
+}
+
+.playlists h2{
+    color: rgb(196, 104, 228);
+}
+
 .about h2{
     color: rgb(152, 237, 234);
 }
@@ -154,4 +162,10 @@ h2{
 
 .update p{
     margin-top: 0px;
+}
+
+.playlists ul{
+    list-style-type: none;
+    margin-left: 0;
+    padding-left: 0;
 }
